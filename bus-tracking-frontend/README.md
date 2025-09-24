@@ -1,5 +1,13 @@
 # React + Vite
 
+## Configure backend URL
+
+Create a `.env.local` file in this directory to point to the backend (defaults to `http://127.0.0.1:5001`):
+
+```bash
+VITE_BACKEND_URL=http://127.0.0.1:5001
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
