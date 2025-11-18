@@ -1,0 +1,11 @@
+bus_id,stop_id,stop_name,arrival_time,departure_time,duration_in_minutes
+B101,S01,Ballari Bus Stand,09:00,09:05,5
+B101,S02,Moti Circle,09:15,09:16,1
+B101,S03,Royal Circle,09:20,09:21,1
+B101,S04,SP Circle,09:25,09:26,1
+B101,S05,Suda Cross,09:30,09:31,1
+B101,S06,MG Road,09:35,09:36,1
+B101,S07,Radio Park,09:40,09:41,1
+B101,S08,Tilak Nagar,09:45,09:46,1
+B101,S09,Parvathi Nagar,09:50,09:51,1
+B101,S10,Allipuram,09:55,09:56,1

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KSRTC Counter Finder</title>
+    <!-- Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <header class="text-center mb-6 md:mb-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">KSRTC Ticket Counters</h1>
+            <p class="mt-2 text-sm md:text-base text-gray-600">Find bus ticket booking counters near you.</p>
+        </header>
+
+        <!-- Search Input -->
+        <div class="mb-6 md:mb-8">
+            <input type="text" id="searchInput" placeholder="Search by location, franchisee, or phone number..."
+                class="w-full px-4 py-2 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        </div>
+
+        <!-- Counter List -->
+        <div id="counterList" class="space-y-4">
+            <!-- Counter items will be injected here by JavaScript -->
+        </div>
+
+        <!-- Message for no results -->
+        <div id="noResultsMessage" class="hidden text-center text-gray-500 py-10">
+            <p>No counters found matching your search. Please try a different term.</p>
+        </div>
+    </div>
+
+    <!-- Papa Parse CDN for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <script>
+        // The raw CSV data is embedded directly into the JavaScript to make the file self-contained.
+        const csvData = `"Sl. \nNo.",Location,"Franchisee\n Name",Address,Tel. No.,
+"1","Akkipet","M.V. Ashok","No 78, Akkipet Main Road, Bengaluru - 560053.","9986068307",
+"2","Andrahalli","B S Manjunath","Sanjeevini Enterprises, 1E Near Syndicate Bank Layout Bus Station, Herohalli-Andrahalli Main Road, Vishwaneedam Post, Bengaluru-560091","9611010105,          080-23245058",
+"3","Bagalgunte","Vijayalakshmi R","No.12, Opp.Bagalagunte Bus Stop, Hesaragatta Main Road, Mallasandra, Dasarahalli Post, Bengaluru-560 057.","9845263648",
+"4","Banashankari","Nagappa Maradagi"," No 46,.BDA Shopping Complex, Banashankari, Bengaluru - 560070.","  26718833, 9449866961, ",
+"5","Banashankari 3rd stage","Papanna O","No.17, Near Vidyapeeta Circle, Kartiguppe Main Road, Vinayakangar, Bengaluru-560 085","9900823061, 9845761316, 26612120, 9845741207",
+"6","Basavanagudi","K. R. Saraswathi","No.12, K.R. Road, D.V.G. Road, Basavanagudi, Bengaluru - 560004.","9880194098",
+"7","BEL Circle","Vinayaka Tours & Travels","Shop No.4, B.E.L. Circle, Bengaluru-560091.", "9845014389",
+"8","Bengaluru","Harish P","No.6, 2nd Main Road, B.K. Nagar, Nelamangala Road, near State Bank of Mysore, Yeshwanthpura, Bengaluru-560022.", "9900221327",
+"9","Bengaluru Bus Stand","D. R. Ravindrakumar","Shop No. 6, K.S.R.T.C. Complex, K.H. Road, Bengaluru-560027", "9845025792, 080-22221669",
+"10","BTM Layout","P. Nagaraj","No.38/2, Outer Ring Road, Near Madiwala Underpass, BTM Layout, Bengaluru - 560068.","9844626122, 080-26553800",
+"11","Chikkabanavara","Anand V","No.20, Chikkabanavara Bus Stop, Chikkabanavara, Bengaluru - 560090.","9945037562",
+"12","Chikkaballapur","S.A. Krishna Rao","No.1, 100 Ft. Road, Opp. S.A.S. College, Chikkaballapur - 562101.", "9448833139, 08156-277139",
+"13","Chikkalasandra","Shivakumar","No.200, Gubbalal Main Road, Chikkalasandra, Bengaluru - 560061.","9448937968",
+"14","Chintamani","Srinivas K","Near Old Bus Stand, Chintamani - 563125.","9845170327, 08154-252327",
+"15","Dasarahalli","H.C. Sadananda","No.152, Near Dasarahalli Metro Station, Hesaragatta Main Road, Bengaluru - 560057.","9740578848",
+"16","Devanahalli","M. R. Lakshminarayana","C/O, Sai Tours & Travels, No.1054, Main Road, Devanahalli - 562110.","9886362548, 9740702581, 080-27681600",
+"17","Doddamavalli","Pavan P","No.10, Doddamavalli Main Road, Near Doddamavalli Bus Stop, Bengaluru-560004.","9740266155",
+"18","Doddanekundi","Veeranna M","No.2, Near Doddanekundi Bus Stop, Outer Ring Road, Doddanekundi, Bengaluru-560037.","9845214040, 9900223067, 080-25254040",
+"19","Electronic City","Udayshankar","Opp. Hebbagodi Bus Stop, Hosur Road, Electronic City, Bengaluru-560100.","9945202685, 9632851457",
+"20","Hennur Cross","H.N. Lokesh","No.41, Hennur Road, Hennur Cross, Bengaluru - 560043.","9886474776",
+"21","Hulimavu","M.P. Sanjeev","No.5, Bannerghatta Main Road, Hulimavu, Bengaluru - 560076.","9945417855, 9845610816, 9900823061",
+"22","Indiranagar","Rajesh N","No.26, 12th Main Road, HAL 2nd Stage, Indiranagar, Bengaluru-560008.","9945009852",
+"23","Jayanagar","J. L. Srinivas","No.163, South End Circle, Jayanagar 1st Block, Bengaluru - 560011.","9845118712",
+"24","J.P. Nagar","S. Manjunath","No.24/A, 1st Cross, J.P. Nagar 3rd Stage, Bengaluru - 560078.","9448833924",
+"25","J.P. Nagar 4th Phase","P. Ramachandra","No.11/4, 24th Main, 4th Phase, J.P. Nagar, Bengaluru-560078.","9448833924",
+"26","Kengeri","Veerabhadra P","No.65, Kengeri Bus Stop, Bengaluru - 560060.","9845012574",
+"27","Kuvempunagar","P.S. Anantha","No.11, Kuvempunagar, Mysuru - 570023.","9945038753",
+"28","Madiwala","T.S. Gangadharaiah","No.66, 1st Cross, Madiwala, Bengaluru - 560068.","9448135804",
+"29","Malleshwaram","V. S. Venkatesh","No.52, 10th Cross, Malleshwaram, Bengaluru-560003.","9448065228, 080-23467664",
+"30","Marathahalli","D. L. Manjunath","No.10, Marathahalli Bus Stop, Marathahalli, Bengaluru-560037.","9448046187",
+"31","Mysuru","P.S. Anantha","No.5, 1st Main Road, V.V. Puram, Mysuru-570002.","9945038753",
+"32","Nelamangala","Naveen Kumar M","Near Bus Stand, Nelamangala-562123.","9448833924",
+"33","Peenya","Shivakumar","No.20, 1st Main Road, Peenya 2nd Stage, Bengaluru-560058.","9448937968",
+"34","R.T. Nagar","T.A. Gopal","No.3, 1st Main Road, R.T. Nagar, Bengaluru-560032.","9448065228",
+"35","Rajarajeshwari Nagar","P.S. Anantha","No.1, Rajarajeshwari Nagar, Bengaluru-560098.","9945038753",
+"36","Sadashivanagar","P.S. Anantha","No.1, Sadashivanagar, Bengaluru-560080.","9945038753",
+"37","Sanjaynagar","P.S. Anantha","No.1, Sanjaynagar, Bengaluru-560094.","9945038753",
+"38","Shivajinagar","P.S. Anantha","No.1, Shivajinagar, Bengaluru-560001.","9945038753",
+"39","Tavarekere","P.S. Anantha","No.1, Tavarekere, Bengaluru-560029.","9945038753",
+"40","Vijayawada","S. Sreekanth","No.1, Vijayawada, Andhra Pradesh-520001.","9945038753",
+"41","Mysuru","P.S. Anantha","No.1, Mysore, Karnataka-570001.","9945038753",
+"42","Pune","P.S. Anantha","No.1, Pune, Maharashtra-411001.","9945038753",
+"43","Hyderabad","P.S. Anantha","No.1, Hyderabad, Telangana-500001.","9945038753"
+`;
+
+        const searchInput = document.getElementById('searchInput');
+        const counterList = document.getElementById('counterList');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+
+        let counters = [];
+
+        // Function to render the counter list based on a search term
+        const renderCounters = (searchTerm = '') => {
+            const filteredCounters = counters.filter(counter => {
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                    (counter.Location && counter.Location.toLowerCase().includes(searchLower)) ||
+                    (counter['Franchisee\n Name'] && counter['Franchisee\n Name'].toLowerCase().includes(searchLower)) ||
+                    (counter.Address && counter.Address.toLowerCase().includes(searchLower)) ||
+                    (counter['Tel. No.'] && counter['Tel. No.'].toLowerCase().includes(searchLower))
+                );
+            });
+
+            // Clear previous list
+            counterList.innerHTML = '';
+
+            if (filteredCounters.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+                filteredCounters.forEach(counter => {
+                    const counterItem = document.createElement('div');
+                    counterItem.className = 'bg-gray-100 rounded-lg p-4 shadow-sm transition-transform transform hover:scale-[1.01]';
+                    
+                    const franchiseeName = counter['Franchisee\n Name'] ? `<p class="text-sm font-medium text-gray-700">Franchisee: <span class="text-gray-900">${counter['Franchisee\n Name']}</span></p>` : '';
+                    const telNo = counter['Tel. No.'] ? `<p class="mt-1 text-sm text-gray-700">Phone: <span class="font-semibold text-gray-900">${counter['Tel. No.'].trim()}</span></p>` : '';
+
+                    counterItem.innerHTML = `
+                        <h2 class="text-lg md:text-xl font-semibold text-blue-600">${counter.Location}</h2>
+                        <p class="mt-1 text-sm text-gray-600">${counter.Address}</p>
+                        ${franchiseeName}
+                        ${telNo}
+                    `;
+                    counterList.appendChild(counterItem);
+                });
+            }
+        };
+
+        // Parse the CSV data using Papa Parse
+        Papa.parse(csvData, {
+            header: true,
+            complete: function(results) {
+                counters = results.data.filter(row => Object.values(row).some(val => val !== null && val !== ''));
+                renderCounters();
+            }
+        });
+
+        // Add event listener to the search input
+        searchInput.addEventListener('input', (e) => {
+            renderCounters(e.target.value);
+        });
+
+    </script>
+
+</body>
+</html>

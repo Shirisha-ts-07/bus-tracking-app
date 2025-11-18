@@ -6,6 +6,7 @@ import logging
 from logging import StreamHandler
 import sys
 from routes.realtime import bp as realtime_bp
+from routes.search import bp as search_bp
 
 
 def create_app() -> Flask:
@@ -34,6 +35,7 @@ def create_app() -> Flask:
 
     # Blueprints
     app.register_blueprint(realtime_bp)
+    app.register_blueprint(search_bp)
 
     # Basic health and version endpoints
     @app.get("/")
@@ -70,6 +72,6 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5001")), debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5002")), debug=True)
 
 
