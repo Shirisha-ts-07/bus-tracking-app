@@ -75,11 +75,19 @@ function Home() {
           longitude: p.longitude,
           eta: 5,
         })) || [];
-        setBuses(items);
+        setBuses((prev) => {
+          // If tracking, don't update tracked bus from backend
+          if (activeTrack?.busId) {
+            return prev.map((b) => (b.bus_id === activeTrack.busId ? b : (items.find((i) => i.bus_id === b.bus_id) || b)));
+          }
+          return items;
+        });
         // seed targets and render positions on first load
         const t = new Map(targetsRef.current);
         const r = new Map(renderPositions);
         for (const b of items) {
+          // Don't update tracked bus position
+          if (activeTrack?.busId && b.bus_id === activeTrack.busId) continue;
           t.set(b.bus_id, { lat: b.latitude, lng: b.longitude });
           if (!r.has(b.bus_id)) r.set(b.bus_id, { lat: b.latitude, lng: b.longitude });
         }
@@ -90,7 +98,7 @@ function Home() {
     fetchSnapshot();
     const id = setInterval(fetchSnapshot, 10000);
     return () => { active = false; clearInterval(id); };
-  }, []);
+  }, [activeTrack]);
 
   // Update center when city changes
   useEffect(() => {
@@ -107,6 +115,8 @@ function Home() {
         const msg = JSON.parse(ev.data);
         if (msg.type === "position") {
           const p = msg.payload;
+          // If tracking, ignore backend updates for tracked bus
+          if (activeTrack?.busId && p.bus_id === activeTrack.busId) return;
           upsertBus({ bus_id: p.bus_id, number: p.bus_id, latitude: p.latitude, longitude: p.longitude });
           // update target for animation
           const t = new Map(targetsRef.current);
@@ -147,7 +157,7 @@ function Home() {
     es.onmessage = onMessage;
     es.onerror = () => { /* silently rely on polling */ };
     return () => es.close();
-  }, []);
+  }, [activeTrack]);
 
   // Notification opt-in banner and mock ETA toasts
   useEffect(() => {
@@ -190,6 +200,13 @@ function Home() {
   };
 
   const handleTrackBus = (busId, result, idx) => {
+    // If already tracking this bus, stop tracking
+    if (activeTrack?.busId === busId) {
+      setActiveTrack(null);
+      pushToast(`Stopped tracking ${busId}`);
+      return;
+    }
+    // Otherwise, start tracking
     const path = DUMMY_TRACKS[busId] || DUMMY_TRACKS.default;
     if (!path || path.length === 0) {
       pushToast("No track data available for this bus yet.");
@@ -418,9 +435,16 @@ function Home() {
                           </div>
                           <button
                             onClick={() => handleTrackBus(busId, r, idx)}
-                            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(34,197,94,0.15)', color: '#c7f9d4', fontWeight: 600 }}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: '1px solid var(--border)',
+                              background: activeTrack?.busId === busId ? 'rgba(255,99,71,0.15)' : 'rgba(34,197,94,0.15)',
+                              color: activeTrack?.busId === busId ? '#ffd6d6' : '#c7f9d4',
+                              fontWeight: 600
+                            }}
                           >
-                            {activeTrack?.busId === busId ? 'Tracking…' : 'Track Bus'}
+                            {activeTrack?.busId === busId ? 'Stop Tracking' : 'Track Bus'}
                           </button>
                         </div>
                       );
